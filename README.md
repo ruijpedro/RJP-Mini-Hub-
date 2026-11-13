@@ -1,52 +1,38 @@
-# RJP Mini Hub v0.2 — ESP32-2432S028
+# RJP Mini Hub v0.3 — ESP32-2432S028
 
-Projeto independente para a placa amarela ESP32 com **ecrã tátil de 2,8"**, 320×240, duas portas USB e módulo ESP-32S.
+Firmware para ESP32 com ecrã 2,8" 320×240, duas portas USB. **Versão experimental de desenvolvimento:** testar o ecrã e os periféricos numa placa física antes de distribuir.
 
-**Estado: código de diagnóstico preparado.** Ainda não testado numa placa física. Comboios e Agenda são páginas demonstrativas (sem ligações às APIs nesta versão).
+## Funcionalidades
 
-## Funções incluídas
-- Ecrã horizontal com botões: **Comboios, Agenda, Sensores e Definições**
-- Barras vermelha/verde/azul no arranque para diagnosticar o TFT
-- Calibração tátil XPT2046 com três cruzes, guardada em memória persistente
-- Navegação pelo botão **BOOT** mesmo quando o toque não funcionar
-- Configuração Wi-Fi pelo telemóvel: hotspot **RJP-MiniHub-Setup**, palavra-passe inicial **rjpmini2026**
-- Abrir **http://192.168.4.1** no telemóvel ligado ao hotspot e preencher o nome e palavra-passe da rede Wi-Fi de casa
-- Hora de Portugal continental (com mudança de hora) e número da semana ISO
-- Leitura analógica do sensor de luminosidade da placa
+- Mantém as credenciais Wi-Fi e a calibração XPT2046 da v0.2 (Preferences `rjpmini`), desde que não se apague a NVS.
+- Relógio Europe/Lisbon e número da semana ISO.
+- **Comboios:** lê o endpoint RJP Train Live `https://rjp-train-live-api.rjpedro.workers.dev/api/trains/active` quando se abre o menu e atualiza de 90 em 90 segundos enquanto esse menu estiver aberto. Mostra até 4 comboios com origem/destino e atraso reportado. A disponibilidade depende do Worker e da fonte Comboios Live de Rui Costa; informação não destinada à segurança da exploração ferroviária. **Provisoriamente, nesta versão de teste, não é validado o certificado TLS do feed: não são transmitidos dados sensíveis.**
+- **Agenda:** mostra o número da semana e até três compromissos configurados no próprio ESP32 em `http://IP-DA-PLACA/agenda`. Ainda **não sincroniza** com a Agenda RJP, Google nem Outlook.
+- **Atualização OTA local:** requer uma única gravação USB para instalar a v0.3. Nas versões posteriores é possível atualizar pelo navegador de um dispositivo na mesma rede, sem novo cabo USB.
+- **Diagnóstico:** sensor de luz e possibilidade de recalibrar o ecrã e reconfigurar a rede.
 
-**Não colocar dados de acesso à rede nem tokens nos ficheiros do GitHub.** Os dados são guardados localmente no ESP32 através de Preferences.
+## Instalação inicial da v0.3 (a partir da v0.2)
 
-## Compilar no GitHub
-1. Abrir [Actions deste repositório](https://github.com/ruijpedro/RJP-Mini-Hub-/actions).
-2. Selecionar **Compilar firmware ESP32** e verificar a execução iniciada automaticamente após um push, ou usar **Run workflow**.
-3. Se ambos os trabalhos estiverem verdes, descarregar o artefacto **RJP-MiniHub-cyd_ili9341** em **Artifacts**. Há também o **cyd_st7789** para outro controlador.
-4. Dentro do ZIP do artefacto, usar o ficheiro **RJP-MiniHub-cyd_ili9341-full.bin** (não o app.bin) para a gravação inicial.
+1. Abrir [GitHub Actions](https://github.com/ruijpedro/RJP-Mini-Hub-/actions) e entrar na compilação da v0.3 após aprovação.
+2. Descarregar o artefacto `RJP-MiniHub-cyd_st7789` (se foi este o controlador que funcionou anteriormente) ou `RJP-MiniHub-cyd_ili9341`.
+3. Descompactar e, no [esptool-js](https://espressif.github.io/esptool-js/), gravar **`-full.bin` no endereço 0x0**, com **Erase all desmarcado**, para conservar a NVS (Wi-Fi/calibração). Um erase all apagaria estes dados.
+4. Reiniciar e verificar Wi-Fi, calibração, Comboios e Agenda.
 
-## Gravar no ESP32 pelo Chrome/Edge
-1. Usar apenas a **placa amarela**, ligada por cabo USB **de dados**.
-2. Abrir [Espressif esptool-js](https://espressif.github.io/esptool-js/) no Chrome/Edge e selecionar a porta série.
-3. Selecionar o ficheiro **-full.bin** em **Flash Address 0x0**.
-4. Programar e reiniciar a placa (RESET ou desligar/ligar a alimentação).
-5. Se o ecrã ficar branco/invertido, tentar a variante **cyd_st7789**, também em 0x0.
+## OTA nas versões posteriores
 
-⚠️ Gravar firmware novo substitui o programa original; se o quiseres conservar, faz primeiro uma cópia de segurança do conteúdo da flash. Se o computador impedir acesso USB/portas série, fazer a primeira gravação num computador pessoal.
+1. Descarregar o novo artefacto do GitHub Actions.
+2. Na placa, abrir **Definições → OTA LOCAL**. O ecrã mostra o IP da placa e um código temporário de oito dígitos válido por cinco minutos.
+3. Num telemóvel ou computador **na mesma rede Wi-Fi**, abrir `http://IP-DA-PLACA/update`.
+4. Na autenticação do navegador: utilizador **rjp**, palavra-passe **o código mostrado no ecrã**.
+5. Selecionar **apenas o `-app.bin`** da nova versão. Não usar o `-full.bin` no OTA.
+6. A placa valida o firmware recebido antes de reiniciar. Se ocorrer erro, conserva o firmware anterior.
 
-## Primeiro teste de aceitação
-- São visíveis as três barras RGB e a mensagem RJP MINI HUB.
-- Aparece **CALIBRACAO DO TOQUE**. Tocar no centro de cada uma das três cruzes.
-- Se a calibração falhar, premir o botão **BOOT** da placa para navegar pelos ecrãs de diagnóstico.
-- Na ausência de Wi-Fi configurado, ligar o telemóvel a **RJP-MiniHub-Setup** e abrir **http://192.168.4.1**.
-- Após conectar à Internet, confirmar relógio e número da semana.
-- Em **Definições**, verificar o IP da placa; é possível refazer a calibração e reconfigurar o Wi-Fi.
+**Segurança:** a interface OTA é servida por HTTP na LAN, sem cifragem do tráfego. Só fica disponível durante a janela aberta no ecrã. Não encaminhar a porta 80 nem expor a placa à Internet. Para produção, planeia-se assinatura do firmware e entrega automática por TLS validado.
 
-## Pinos desta variante CYD
-| Função | GPIO |
-|---|---|
-| TFT SCLK / MOSI / MISO | 14 / 13 / 12 |
-| TFT CS / DC / Backlight | 15 / 2 / 21 |
-| Touch SCLK / MOSI / MISO / CS | 25 / 32 / 39 / 33 |
-| Sensor de luz | 34 |
-| BOOT | 0 |
+## Ambiente
+- PlatformIO, Arduino ESP32, TFT_eSPI, XPT2046_Touchscreen e ArduinoJson
+- GitHub Actions: duas variantes de ecrã, binários `-full.bin` (USB/0x0) e `-app.bin` (OTA local)
+- [Código do firmware](src/main.cpp), [cliente RJP Train Live](src/train_feed.h)
 
-## Próxima fase
-Após validação do hardware: consumir dados da **RJP Train Live** e da **Agenda RJP**, depois preparar atualização OTA. As integrações dependem de endpoints e credenciais próprias e não devem ser consideradas funcionais nesta v0.2.
+## Futuro
+Sincronização autenticada dos eventos da Agenda RJP e atualização OTA automática com canal de releases. Manter o projeto RJP Train Live original sem alterações.
