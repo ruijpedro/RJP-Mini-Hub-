@@ -1,3 +1,4 @@
+#ifdef DISPLAY_DIAGNOSTIC
 // RJP Mini Hub - Teste isolado do ecrã CYD, sem Wi-Fi nem aplicações
 // Este ficheiro so compila nos ambientes diag_*. O firmware normal fica intacto.
 #include <Arduino.h>
@@ -62,3 +63,5 @@ void loop(){
   }
   delay(20);
 }
+
+#endif // DISPLAY_DIAGNOSTIC
