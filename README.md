@@ -15,7 +15,7 @@ Firmware para ESP32 com ecrã 2,8" 320×240, duas portas USB. **Versão experime
 
 1. Abrir [GitHub Actions](https://github.com/ruijpedro/RJP-Mini-Hub-/actions) e entrar na compilação da v0.3 após aprovação.
 2. Descarregar o artefacto `RJP-MiniHub-cyd_st7789` (se foi este o controlador que funcionou anteriormente) ou `RJP-MiniHub-cyd_ili9341`.
-3. Descompactar e, no [esptool-js](https://espressif.github.io/esptool-js/), gravar **`-full.bin` no endereço 0x0**, com **Erase all desmarcado**, para conservar a NVS (Wi-Fi/calibração). Um erase all apagaria estes dados.
+3. **Para atualizar a v0.2 sem perder o Wi-Fi e a calibração**, extrair o ZIP e, no [esptool-js](https://espressif.github.io/esptool-js/), gravar **`-app.bin` no endereço `0x10000`**, com **Erase all desmarcado**. A tabela de partições mantém-se inalterada. **Não utilizar `-full.bin` para esta atualização:** por preencher também os setores intermédios, essa imagem pode apagar a NVS, mesmo com Erase all desmarcado.
 4. Reiniciar e verificar Wi-Fi, calibração, Comboios e Agenda.
 
 ## OTA nas versões posteriores
@@ -36,3 +36,6 @@ Firmware para ESP32 com ecrã 2,8" 320×240, duas portas USB. **Versão experime
 
 ## Futuro
 Sincronização autenticada dos eventos da Agenda RJP e atualização OTA automática com canal de releases. Manter o projeto RJP Train Live original sem alterações.
+
+## Recuperação total / primeira gravação
+Quando for necessário gravar do zero ou recuperar a placa, usar `-full.bin` no endereço `0x0`. Esta operação **pode apagar a NVS**, obrigando a configurar novamente Wi-Fi e calibração do toque.
