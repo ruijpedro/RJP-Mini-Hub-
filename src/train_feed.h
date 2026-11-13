@@ -73,10 +73,10 @@ static bool fetchTrainFeed() {
     JsonObject live=row["data"]["status"];
     JsonObject fixed=row["fixed"];
     JsonObject db=row["db"];
-    String num=String((const char*)(live["trainNumber"] | ""));
-    if(num.isEmpty())num=String((const char*)(fixed["trainNumber"] | ""));
-    if(num.isEmpty())num=String((const char*)(db["trainNumber"] | ""));
-    if(num.isEmpty())num=String((const char*)(row["train_id"] | ""));
+    String num=live["trainNumber"].as<String>();
+    if(num.isEmpty())num=fixed["trainNumber"].as<String>();
+    if(num.isEmpty())num=db["trainNumber"].as<String>();
+    if(num.isEmpty())num=row["train_id"].as<String>();
     if(num.isEmpty())continue;
     TrainInfo &t=trainRows[n];
     t.number=num;
